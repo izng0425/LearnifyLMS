@@ -1,0 +1,262 @@
+// src/pages/AdminManageCourses.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/sidebar";
+import { BookIcon, UsersIcon, CourseIcon, ClassroomIcon } from "../components/Icons";
+
+export default function AdminManageCourses() {
+  const navigate = useNavigate();
+
+  // Sidebar menu (added Manage Courses)
+  const adminMenu = [
+    { path: "/admin-lessons", label: "Lessons", icon: BookIcon },
+    { path: "/admin-courses", label: "Courses", icon: CourseIcon },
+    { path: "/admin-classroom", label: "Classroom", icon: ClassroomIcon },
+    { path: "/admin-student-list", label: "Student List", icon: UsersIcon },
+    { path: "/admin-manage-instructors", label: "Manage Instructor", icon: UsersIcon },
+    { path: "/admin-manage-courses", label: "Manage Courses", icon: CourseIcon },
+    { path: "/admin-manage-lessons", label: "Manage Lessons", icon: BookIcon }, 
+    { path: "/admin-manage-classroom", label: "Manage Classroom", icon: ClassroomIcon },
+  ];
+
+  const [activeTab, setActiveTab] = useState("coursesList");
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Real data fetching like in AdminCourse.jsx
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError("");
+      const token = sessionStorage.getItem("token");
+      try {
+        const res = await fetch("http://localhost:5050/courses", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch courses");
+        const data = await res.json();
+        setCourses(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setError(e.message || "Unexpected error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const ownerOf = (c) =>
+    c.ownerName ||
+    c.owner ||
+    (typeof c.createdBy === "object"
+      ? c.createdBy.name || c.createdBy.email || c.createdBy.username
+      : c.createdBy) ||
+    "—";
+
+  const getStatus = (c) => {
+    const s = typeof c.status === "string" ? c.status.toLowerCase() : "";
+    if (s === "published") return "Published";
+    if (s === "archived") return "Archived";
+    if (s === "draft") return "Draft";
+    if (c.isArchived || c.archived) return "Archived";
+    if (c.isPublished || c.published) return "Published";
+    return "Draft";
+  };
+
+  // Calculate average lessons per course
+  const avgLessons = useMemo(() => {
+    if (courses.length === 0) return undefined;
+    const totalLessons = courses.reduce(
+      (sum, c) => sum + (c.lessons?.length || 0),
+      0
+    );
+    return totalLessons / courses.length;
+  }, [courses]);
+
+  // Summary counts by status
+  const statusCounts = useMemo(() => {
+    const counts = { Published: 0, Draft: 0, Archived: 0 };
+    courses.forEach((c) => {
+      const s = getStatus(c);
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    return counts;
+  }, [courses]);
+
+  return (
+    <div className="flex">
+      <Sidebar items={adminMenu} />
+
+      <main className="flex-1 mx-auto max-w-6xl px-4 py-8">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold tracking-tight text-teal-800">
+            Manage Courses
+          </h1>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-6 flex gap-2">
+          {[
+            { key: "coursesList", label: "Courses List" },
+            { key: "summary", label: "Summary" }, // Changed from "info" to "summary"
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-3 py-1 rounded-md text-sm font-medium ${
+                activeTab === tab.key
+                  ? "bg-teal-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        
+        <div className="mb-6 text-right text-sm font-medium text-gray-800">
+          Total Courses: <span className="font-bold">{courses.length}</span>
+        </div>
+
+        {/* Courses List */}
+        {activeTab === "coursesList" && (
+          <>
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-gray-500">Loading courses…</p>
+              </div>
+            ) : error ? (
+              <div className="text-red-500 text-center p-4">{error}</div>
+            ) : (
+              <div className="overflow-x-auto overflow-y-auto max-h-96 rounded-xl border border-teal-200 bg-white shadow-sm">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Course</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Instructor Created</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Status</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700">Rate of Completion</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {courses.map((course) => {
+                      const instructor = ownerOf(course);
+                      const status = getStatus(course);
+                      
+                      return (
+                        <tr key={course._id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 text-center">{course.title || "Untitled course"}</td>
+                          <td className="px-4 py-3 text-center">{instructor}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                                status === "Published"
+                                  ? "bg-green-100 text-green-800"
+                                  : status === "Archived"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="w-24 mx-auto">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-green-600 font-medium">{course.completedPercent || 75}%</span>
+                                <span className="text-red-600 font-medium">{course.notCompletedPercent || 25}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-green-600 h-2 rounded-full" 
+                                  style={{ width: `${course.completedPercent || 75}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Summary Tab - Simplified like AdminManageLessons */}
+        {activeTab === "summary" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
+            {/* Average Lessons per Course */}
+            <KPIBlock
+              title="Average Lessons per Course"
+              value={
+                avgLessons !== undefined ? avgLessons.toFixed(2) : "—"
+              }
+            />
+
+            {/* Courses by Status */}
+            <StatBlock
+              title="Courses by Status"
+              items={[
+                { label: "Published", value: statusCounts.Published || 0 },
+                { label: "Draft", value: statusCounts.Draft || 0 },
+                { label: "Archived", value: statusCounts.Archived || 0 },
+              ]}
+            />
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+/** KPI block (for numeric stats) */
+function KPIBlock({ title, value }) {
+  const emphasize = title === "Average Lessons per Course";
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h3
+        className={`mb-2 ${
+          emphasize
+            ? "text-base font-bold text-gray-800"
+            : "text-sm font-semibold text-gray-600"
+        }`}
+      >
+        {title}
+      </h3>
+      <p className="text-2xl font-bold text-teal-700">{value}</p>
+    </div>
+  );
+}
+
+/** List block (for grouped counts) */
+function StatBlock({ title, items }) {
+  const emphasize = title === "Courses by Status";
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md md:col-span-2 lg:col-span-1">
+      <h3
+        className={`mb-3 ${
+          emphasize
+            ? "text-base font-bold text-gray-800"
+            : "text-sm font-semibold text-gray-600"
+        }`}
+      >
+        {title}
+      </h3>
+      <ul className="space-y-2">
+        {items.map((x) => (
+          <li key={x.label} className="flex justify-between">
+            <span className="text-gray-700">{x.label}</span>
+            <span className="font-semibold text-gray-900">{x.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
