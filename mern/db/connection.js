@@ -7,10 +7,7 @@ const MONGO_URI = process.env.ATLAS_URI;
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.ATLAS_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(MONGO_URI); // ✅ simplified — no deprecated options
     console.log("✅ MongoDB connected successfully");
   } catch (err) {
     console.error("❌ MongoDB connection error:", err);
