@@ -11,12 +11,15 @@ export default function Login() {
 
   const navigate = useNavigate();
 
+  // Use environment variable or fallback to localhost
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5050";
+
   const handleLogin = async () => {
     setError(""); 
     setSuccess("");
 
     try {
-      const response = await fetch("http://localhost:5050/auth/login", {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: username, password }), // backend expects `email`
@@ -30,7 +33,6 @@ export default function Login() {
         sessionStorage.setItem("username", username);
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("user", JSON.stringify(data.user));
-
 
         setSuccess("Login successful! Redirecting...");
         setTimeout(() => {
@@ -47,26 +49,23 @@ export default function Login() {
 
       } else {
         console.error("❌ Login failed:", data.error);
-        setError(data.error || "Login failed. Please try again."); // ✅ set error
+        setError(data.error || "Login failed. Please try again.");
       }
     } catch (err) {
       console.error("❌ Fetch error:", err);
-      setError("Server error, please try again later."); // ✅ show server error
+      setError("Server error, please try again later.");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      {/* Card container */}
       <div className="bg-white p-10 rounded-lg shadow-lg w-96 flex flex-col gap-6">
-        {/* Colored LEARNIFY title */}
         <h1 className="text-4xl font-bold text-center mb-2">
           <span className="text-teal-500">LEARN</span>
           <span className="text-black">IFY</span>
         </h1>
         <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Login</h2>
 
-        {/* Username */}
         <div className="flex flex-col">
           <label className="mb-2 font-medium text-gray-700">Email:</label>
           <Textbox
@@ -78,11 +77,10 @@ export default function Login() {
           />
         </div>
 
-        {/* Password with Show/Hide */}
         <div className="flex flex-col relative">
           <label className="mb-2 font-medium text-gray-700">Password:</label>
           <Textbox
-            type={showPassword ? "text" : "password"} // 👈 toggle input type
+            type={showPassword ? "text" : "password"}
             placeholder="Enter password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -97,11 +95,9 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Error + Success messages */}
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         {success && <p className="text-green-500 text-sm text-center">{success}</p>}
 
-        {/* Login button */}
         <button
           onClick={handleLogin}
           className="w-full bg-teal-500 text-white py-3 rounded-lg font-semibold hover:bg-teal-600 transition-colors"
@@ -109,7 +105,6 @@ export default function Login() {
           Login
         </button>
 
-        {/* Signup link */}
         <p className="text-center mt-4 text-gray-700">
           No account?{" "}
           <Link to="/signup" className="text-teal-500 font-semibold hover:underline">
