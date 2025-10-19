@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/sidebar";
-import { BookIcon, UsersIcon, CourseIcon, ClassroomIcon, ReportIcon } from "../components/Icons";
+import { BookIcon, UsersIcon, CourseIcon, ClassroomIcon } from "../components/Icons";
 
 export default function AdminLessons() {
   // Sidebar items for Admin
@@ -12,9 +12,12 @@ export default function AdminLessons() {
     { path: "/admin-student-list", label: "Student List", icon: UsersIcon },
     { path: "/admin-manage-instructors", label: "Manage Instructor", icon: UsersIcon },
     { path: "/admin-manage-courses", label: "Manage Courses", icon: CourseIcon },
-    { path: "/admin-manage-lessons", label: "Manage Lessons", icon: BookIcon }, 
+    { path: "/admin-manage-lessons", label: "Manage Lessons", icon: BookIcon },
     { path: "/admin-manage-classroom", label: "Manage Classroom", icon: ClassroomIcon },
   ];
+
+  // ✅ Set API base URL
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5050";
 
   // UI state
   const [lessons, setLessons] = useState([]);
@@ -60,7 +63,6 @@ export default function AdminLessons() {
     return { status, cls };
   };
 
-  // If you show credit points:
   const getCreditPoints = (l) => {
     const cp =
       l.creditPoints ??
@@ -77,8 +79,7 @@ export default function AdminLessons() {
 
       const token = sessionStorage.getItem("token");
       try {
-        // 👇 change endpoint if admin lessons are on a different path
-        const res = await fetch("http://localhost:5050/lessons", {
+        const res = await fetch(`${API_URL}/lessons`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -96,7 +97,7 @@ export default function AdminLessons() {
     };
 
     fetchLessons();
-  }, []);
+  }, [API_URL]);
 
   // Delete lesson
   const handleDelete = async () => {
@@ -104,7 +105,7 @@ export default function AdminLessons() {
 
     try {
       const token = sessionStorage.getItem("token");
-      const res = await fetch(`http://localhost:5050/lessons/${deleteTarget._id}`, {
+      const res = await fetch(`${API_URL}/lessons/${deleteTarget._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
