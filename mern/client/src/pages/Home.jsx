@@ -12,7 +12,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   // Use environment variable or fallback to localhost
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5050";
+  const API_URL = process.env.VITE_APP_API_URL || "http://localhost:5050";
 
   const handleLogin = async () => {
     setError(""); 
