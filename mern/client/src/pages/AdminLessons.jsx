@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { API_URL } from "../config/api";
 import { Link } from "react-router-dom";
 import Sidebar from "../components/sidebar";
 import { BookIcon, UsersIcon, CourseIcon, ClassroomIcon } from "../components/Icons";
@@ -17,6 +16,8 @@ export default function AdminLessons() {
     { path: "/admin-manage-classroom", label: "Manage Classroom", icon: ClassroomIcon },
   ];
 
+  // ✅ Set API base URL
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5050";
 
   // UI state
   const [lessons, setLessons] = useState([]);
