@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Textbox from "../components/textbox";
+import { API_URL } from "../config/api";  // ✅ ADD THIS LINE
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
@@ -12,8 +13,6 @@ export default function Login() {
   const navigate = useNavigate();
 
   // Use environment variable or fallback to localhost
-  const API_URL = process.env.VITE_APP_API_URL || "http://localhost:5050";
-
   const handleLogin = async () => {
     setError(""); 
     setSuccess("");
